@@ -32,3 +32,13 @@
 
   - This artwork is primarily rendered using p5.js, which contributes to the lengthy nature of the code files due to the complex interactions and dynamic elements across different scenes.
   - **Thumbnail**: A screenshot of the artwork is used as a cover image to give a preview of the interactive experience.
+
+## Future and Prospects
+
+In the future, I plan to continue my deep dive into AR technology and its application in interactive art. My initial intention is to enhance the interactivity between users and artistic works through AR, moving beyond passive viewing to enable genuine interaction through user movements affecting the artwork.
+
+Although this project did not fully realize the envisioned AR interactivity due to underestimation of time and challenging technical issues, I view these challenges as valuable learning experiences that enrich my future work. Particularly, solving problems related to ml5.js and experimenting with facial and hand tracking have broadened my knowledge in machine learning and image processing.
+
+Going forward, I aim to overcome the technical hurdles encountered and fully integrate AR interactive features into my artworks. Additionally, I plan to explore further possibilities in augmented reality, such as incorporating dynamic physical elements or creating more naturally interactive environments for users.
+
+For those interested in exploring more, I have prepared an AR demo. This demo utilizes your camera in full-screen mode to capture facial and hand movements, enabling simple interactions through gesture recognition. To run this demo, please change the filename in the `<script src="sketch.js"></script>` tag from `sketch` to `sketch-ARtest` in the index.html file. Although this demo is not part of the main project, it offers a glimpse into potential future developments and showcases my initial forays into the field of AR.
