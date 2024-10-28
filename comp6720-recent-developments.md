@@ -1,3 +1,7 @@
 # Recent developments
 
-This is an extra task specifically for students enrolled in the masters course (COMP6720). Students in the undergraduate course (COMP1720) can ignore this file.
+My interactive AR artwork leverages cutting-edge developments in Art and Interaction Computing to create an immersive experience that transcends traditional passive viewing. Recent advances in AR technology have enabled more intuitive and seamless integration of real-world and digital elements, which is fundamental to the dual-environment setup of my piece. By utilizing AR, the artwork allows viewers to manipulate digital elements—such as weather in the rainforest and traffic lights in the city—in real-time, fostering a deeper connection between the user and the virtual environments.
+
+Furthermore, the use of interactive elements in art has been greatly influenced by the growing interest in human-centered design in computing. This approach emphasizes the importance of responsive and adaptable systems that cater to individual user needs. In my artwork, this is reflected in the adaptability of the scenes based on user interactions, which personalizes the experience and enhances engagement.
+
+Through these technological integrations, my project not only aligns with recent innovations in interactive computing but also pushes the boundaries of how art can be experienced, making it a dynamic and evolving entity that invites user participation and reflection.

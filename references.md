@@ -1,2 +1,22 @@
 # References
-- [1] Example Author. 2022. p5.js example code video. Retrieved from https://example.com/video
+- [1] wind1.mp3. Download from https://freesound.org/people/vandale/sounds/379464/
+- [2] wind2.mp3. Download from https://freesound.org/people/vandale/sounds/379468/
+- [3] rain.mp3. Download from https://freesound.org/people/stevenparry/sounds/760955/
+- [4] water1.mp3. Download from https://freesound.org/people/Robinhood76/sounds/321100/
+- [5] water2.mp3. Download from https://freesound.org/people/Robinhood76/sounds/321100/
+- [6] horn1.mp3. Download from https://freesound.org/people/jmpeeples/sounds/331540/
+- [7] horn2.mp3. Download from https://freesound.org/people/jmpeeples/sounds/331540/
+- [8] horn3.mp3. Download from https://freesound.org/people/jmpeeples/sounds/331540/
+- [9] horn4.mp3. Download from https://freesound.org/people/jmpeeples/sounds/331540/
+- [10] horn5.mp3. Download from https://freesound.org/people/jmpeeples/sounds/331540/
+- [11] horn6.mp3. Download from https://freesound.org/people/jmpeeples/sounds/331540/
+- [12] Editing Audio. Use the audio editing website from https://mp3cut.net/cn
+- [13] Converting Audio Formats. Compressed music file conversion format (e.g., WAV to MP3) website from https://cloudconvert.com/wav-to-mp3
+- [14] DynaPuff[wdth,wght].ttf. Download from https://github.com/google/fonts
+- [15] doorbell1.mp3. Download from https://freesound.org/people/guitarguy1985/sounds/69385/
+- [16] doorbell2.mp3. Download from https://freesound.org/people/bennstir/sounds/81072/
+- [17] doorbell3.mp3. Download from https://freesound.org/people/tim.kahn/sounds/163730/
+- [18] lighting1.mp3. Download from https://freesound.org/people/RHumphries/sounds/2523/
+- [19] lighting2.mp3. Download from https://freesound.org/people/RHumphries/sounds/2523/
+- [20] lighting3.mp3. Download from https://freesound.org/people/RHumphries/sounds/2523/
+- [21] fountain.mp3. Download from https://freesound.org/people/martats/sounds/156969/
