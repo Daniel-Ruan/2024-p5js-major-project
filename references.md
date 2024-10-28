@@ -20,3 +20,4 @@
 - [19] lighting2.mp3. Download from https://freesound.org/people/RHumphries/sounds/2523/
 - [20] lighting3.mp3. Download from https://freesound.org/people/RHumphries/sounds/2523/
 - [21] fountain.mp3. Download from https://freesound.org/people/martats/sounds/156969/
+- [22] thumbnail.jpg. Created by myself.
