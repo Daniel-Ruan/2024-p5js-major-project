@@ -749,20 +749,13 @@ class Wind {
 }
 
 class WindSound {
-  constructor() {
-    this.sounds = [];
+  constructor(windSounds) {
+    this.sounds = windSounds;
     this.currentSound = null;
     this.isPlaying = false;
-    this.fadeTime = 0.5; 
-    
-    this.loadSounds();
-  }
+    this.fadeTime = 0.5;
 
-  loadSounds() {
-
-    this.sounds.push(loadSound('assets/wind1.mp3'));
-    this.sounds.push(loadSound('assets/wind2.mp3'));
-
+    // 为每个声音添加结束事件监听器
     this.sounds.forEach(sound => {
       sound.onended(() => {
         if (this.isPlaying) {
@@ -1664,7 +1657,7 @@ class ForestScene {
     this.lightning = new Lightning();
     this.rainSound = new RainSound(rainSound);
     this.rain = new Rain();
-    this.windSound = new WindSound();
+    this.windSound = new WindSound(windSounds);
     this.wind = new Wind();
     this.Winding = false;
     this.windDirection = 'right';
@@ -1728,83 +1721,153 @@ class ForestScene {
 
   handleKeyPressed(key) {
     if (key === 'd' || key === 'D') {
-      this.Winding = true;
-      this.windDirection = 'right';
-      for (let leaf of this.bananaLeaves) {
-        leaf.startSwaying('right');
-      }
-      for (let tree of this.coconutTrees) {
-        tree.startSwaying('right');
-      }
-      this.wind.startWind('right');
-      this.windSound.play();
-      if (this.rain.isRaining) {
-        this.rain.setWindDirection('right');
-      }
+      this.startWindInDirection('right');
     } else if (key === 'a' || key === 'A') {
-      this.Winding = true;
-      this.windDirection = 'left';
-      for (let leaf of this.bananaLeaves) {
-        leaf.startSwaying('left');
-      }
-      for (let tree of this.coconutTrees) {
-        tree.startSwaying('left');
-      }
-      this.wind.startWind('left');
-      this.windSound.play();
-      if (this.rain.isRaining) {
-        this.rain.setWindDirection('left');
-      }
+      this.startWindInDirection('left');
     } else if (key === 's' || key === 'S') {
       if (!this.rain.isRaining) {
-        this.rain.start();
-        this.rainSound.play();
-        this.sky.setRainState(true, this.rain.currentLevel);
-        this.puddles.forEach(puddle => {
-          puddle.show();
-          puddle.setRainLevel(this.rain.currentLevel);
-        });
+        this.startRain();
       } else {
-        this.rain.stop();
-        this.rainSound.stop();
-        this.sky.setRainState(false);
-        this.puddles.forEach(puddle => puddle.hide());
-        this.stones.forEach(stone => stone.reset());
+        this.stopRain();
       }
     } else if (key === 'q' || key === 'Q') {
       if (this.rain.isRaining) {
-        this.rain.changeIntensity('decrease');
-        this.rainSound.changeIntensity('decrease');
-        this.sky.setRainState(true, this.rain.currentLevel);
-        this.puddles.forEach(puddle => puddle.setRainLevel(this.rain.currentLevel));
+        this.decreaseRainIntensity();
       }
     } else if (key === 'e' || key === 'E') {
       if (this.rain.isRaining) {
-        this.rain.changeIntensity('increase');
-        this.rainSound.changeIntensity('increase');
-        this.sky.setRainState(true, this.rain.currentLevel);
-        this.puddles.forEach(puddle => puddle.setRainLevel(this.rain.currentLevel));
+        this.increaseRainIntensity();
       }
     }
   }
 
   handleKeyReleased(key) {
     if ((key === 'a' || key === 'A' || key === 'd' || key === 'D') && this.Winding) {
-      this.Winding = false;
-      for (let leaf of this.bananaLeaves) {
-        leaf.stopSwaying();
-      }
-      for (let tree of this.coconutTrees) {
-        tree.stopSwaying();
-      }
-      this.wind.stopWind();
-      this.windSound.stop();
-      if (this.rain.isRaining) {
-        this.rain.setWindDirection('none');
-      }
+      this.stopWind();
     }
   }
   handleMouseMove(mx, my) {
     this.coconutTrees.forEach(tree => tree.handleMouseMove(mx, my));
   }
+
+  startWindInDirection(direction) {
+    this.Winding = true;
+    this.windDirection = direction;
+    
+    for (let leaf of this.bananaLeaves) {
+      leaf.startSwaying(direction);
+    }
+    for (let tree of this.coconutTrees) {
+      tree.startSwaying(direction);
+    }
+    this.wind.startWind(direction);
+    this.windSound.play();
+    if (this.rain.isRaining) {
+      this.rain.setWindDirection(direction);
+    }
+  }
+
+  stopWind() {
+    this.Winding = false;
+    for (let leaf of this.bananaLeaves) {
+      leaf.stopSwaying();
+    }
+    for (let tree of this.coconutTrees) {
+      tree.stopSwaying();
+    }
+    this.wind.stopWind();
+    this.windSound.stop();
+    if (this.rain.isRaining) {
+      this.rain.setWindDirection('none');
+    }
+  }
+
+  startRain() {
+    this.rain.start();
+    this.rainSound.play();
+    this.sky.setRainState(true, this.rain.currentLevel);
+    this.puddles.forEach(puddle => {
+      puddle.show();
+      puddle.setRainLevel(this.rain.currentLevel);
+    });
+  }
+
+  stopRain() {
+    this.rain.stop();
+    this.rainSound.stop();
+    this.sky.setRainState(false);
+    this.puddles.forEach(puddle => puddle.hide());
+    this.stones.forEach(stone => stone.reset());
+  }
+
+  increaseRainIntensity() {
+    this.rain.changeIntensity('increase');
+    this.rainSound.changeIntensity('increase');
+    this.sky.setRainState(true, this.rain.currentLevel);
+    this.puddles.forEach(puddle => puddle.setRainLevel(this.rain.currentLevel));
+  }
+
+  decreaseRainIntensity() {
+    this.rain.changeIntensity('decrease');
+    this.rainSound.changeIntensity('decrease');
+    this.sky.setRainState(true, this.rain.currentLevel);
+    this.puddles.forEach(puddle => puddle.setRainLevel(this.rain.currentLevel));
+  }
+
+  handleArControlMoveDirection(direction) {
+    if (direction === "Left") {
+      this.startWindInDirection('left');
+    } else if (direction === "Right") {
+      this.startWindInDirection('right');
+    } else {
+      this.stopWind();
+    }
+  }
+
+  handleArControlFingerPosition(x, y, circleRadius) {
+    const screenX = x * width;
+    const screenY = y * height;
+    
+    // 生成圆圈内的采样点
+    const numPoints = 4; // 每个方向的采样点数
+    const stepSize = circleRadius / numPoints;
+
+    for (let dx = -circleRadius; dx <= circleRadius; dx += stepSize) {
+      for (let dy = -circleRadius; dy <= circleRadius; dy += stepSize) {
+        // 检查点是否在圆内
+        if (dx * dx + dy * dy <= circleRadius * circleRadius) {
+          const pointX = screenX + dx;
+          const pointY = screenY + dy;
+          
+          // 将圆内的每个点传递给所有树木
+          this.coconutTrees.forEach(tree => {
+            tree.handleMouseMove(pointX, pointY);
+          });
+        }
+      }
+    }
+    this.coconutTrees.forEach(tree => {
+      tree.handleMouseMove(screenX, screenY);
+    });
+  }
+
+  handleArControlLipsStateDetected(lipsState) {
+    this.decreaseRainIntensity();
+    this.decreaseRainIntensity();
+    if (lipsState === 'Closed') {
+      this.stopRain();
+    } else if (lipsState === 'Small') {
+      this.startRain();
+    } else if (lipsState === 'Medium') {
+      this.startRain();
+      this.increaseRainIntensity();
+    } else if (lipsState === 'Large') {
+      this.startRain();
+      this.increaseRainIntensity();
+      this.increaseRainIntensity();
+    } else {
+      this.stopRain();
+    }
+  }
+
 }

@@ -2,11 +2,36 @@
 let sceneCounter = 3;
 let forestScene;
 let cityScene;
+let arControlScene;
+let arControlScene1;
+let arDetectEnabled = false;
+let arVideo = true;
 let dynapuffFont;
 let windSounds = [];
 let showHelp = true;
+let fingerMetrics;
+
+let lastDirection = "None";
+let lastLipsStatus = "None";
+
+let currentFinger = "index"; // 默认跟踪食指
+let fingerCircleRadius = 30; // 圆的半径
+let fingerCircleAlpha = 200; // 透明度 (0-255)
 
 function preload() {
+  // 初始化 ML 模型
+  handPoseModel = ml5.handPose({
+    maxHands: 1,
+    modelType: "full",
+    flipped: false,
+  });
+  
+  faceMeshModel = ml5.faceMesh({ 
+    maxFaces: 1, 
+    refineLandmarks: true, 
+    flipped: false,
+  });
+  //    flipped: false     flipHorizontal: false
   backgroundImg = loadImage('assets/thumbnail.png');
   dynapuffFont = loadFont('assets/DynaPuff[wdth,wght].ttf');
 
@@ -49,21 +74,78 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   forestScene = new ForestScene(windSounds, rainSound, waterSounds, lightingSounds);
   cityScene = new CityScene(hornSounds, doorbellSounds, fountainSound);
+  cameraWindow = new ARControlScene(handPoseModel, faceMeshModel, 255);
+  arControlScene = new ARControlScene(handPoseModel, faceMeshModel, 0);
 
   textFont(dynapuffFont);
   textAlign(CENTER, CENTER);
 }
 
 function draw() {
-  if (sceneCounter === 3) {
-    drawMainMenu();
-  } else if (sceneCounter === 1) {
-    forestScene.draw();
-    drawHelpText();
-  } else if (sceneCounter === 2) {
-    cityScene.draw();
-    drawHelpText(); 
+
+    if (sceneCounter === 3) {
+      drawMainMenu();
+      if (arDetectEnabled && arControlScene) {
+        drawFingerPoint();
+      }
+    } else if (sceneCounter === 1) {
+      forestScene.draw();
+      if (arDetectEnabled && arControlScene) {
+        drawFingerPoint();
+        let currentDirection = arControlScene.lastMoveDirection;
+        if (currentDirection !== lastDirection) {
+            console.log("Direction changed from", lastDirection, "to", currentDirection);
+            forestScene.handleArControlMoveDirection(currentDirection);
+            lastDirection = currentDirection;
+        }
+        let currentLipsStatus = arControlScene.lipsStatus;
+        if (currentLipsStatus !== lastLipsStatus) {
+            console.log("Lips status changed to", currentLipsStatus);
+            forestScene.handleArControlLipsStateDetected(currentLipsStatus);
+            lastLipsStatus = currentLipsStatus;
+        }
+        console.log("Finger position:", fingerMetrics.width, fingerMetrics.height, fingerCircleRadius);
+        forestScene.handleArControlFingerPosition(
+            fingerMetrics.width,
+            fingerMetrics.height,
+            fingerCircleRadius
+        );
+    }
+      drawHelpText();
+    } else if (sceneCounter === 2) {
+      cityScene.draw();
+      drawHelpText();
+    } 
+
+    if (arVideo) {
+      push(); // 保存当前绘图状态
+      // 计算缩放后的尺寸（例如原尺寸的 1/4）
+      let arWidth = width / 4;
+      let arHeight = height / 4;
+      // 设置 AR 场景的位置（右下角）
+      let arX = width - arWidth; // 距离右边界 20 像素
+      let arY = height - arHeight; // 距离下边界 20 像素
+      // 创建一个半透明的背景
+      fill(0, 0, 0, 50);
+      noStroke();
+      rect(arX, arY, arWidth, arHeight);
+      // 将坐标系移动到右下角并缩放
+      translate(arX, arY);
+      scale(arWidth / width, arHeight / height);   
+      // 绘制 AR 控制场景
+      cameraWindow.draw();    
+      pop(); // 恢复绘图状态
   }
+
+  arControlScene.draw();
+  
+  // if (arDetectEnabled && arControlScene) {
+  //   // 只有在方向改变时才输出
+  //   if (arControlScene.lastMoveDirection !== "None" && 
+  //       arControlScene.lastMoveDirection !== "Detecting") {
+  //       console.log("Current Move Direction:", arControlScene.lastMoveDirection);
+  //   }
+  // } 
 }
 
 function mousePressed() {
@@ -151,6 +233,31 @@ function keyPressed() {
     showHelp = !showHelp;
   } else if (key === 'r' || key === 'R') {
     resetAllScenes();
+  } else if (key === 'c' || key === 'C') {
+    arDetectEnabled = !arDetectEnabled;
+    if (arDetectEnabled) {
+      arControlScene.startDetect();
+
+    } else {
+      arControlScene.stopDetect();
+
+    } 
+  } else if (key === 'v' || key === 'V') {
+    arVideo = !arVideo;
+  } else if (key === '1') {
+    switchFingerTracking("thumb");
+  }
+  else if (key === '2') {
+    switchFingerTracking("index");
+  }
+  else if (key === '3') {
+    switchFingerTracking("middle");
+  }
+  else if (key === '4') {
+    switchFingerTracking("ring");
+  }
+  else if (key === '5') {
+    switchFingerTracking("pinky");
   } else if (sceneCounter === 1) {
     if (key === 'a' || key === 'A' || key === 'd' || key === 'D' || key === 's' || key === 'S' || key === 'q' || key === 'Q' || key === 'e' || key === 'E' || key === 'r' || key === 'R') {
       forestScene.handleKeyPressed(key);
@@ -245,7 +352,6 @@ function drawHelpText() {
   fill(0, 0, 0, 100);
   noStroke();
   
-  // 响应式文本大小
   let fontSize = width * 0.015;
   if (width < 600) {
     fontSize = width * 0.03;
@@ -286,6 +392,50 @@ function drawHelpText() {
   }
   pop();
 }
+
+function drawFingerPoint() {
+
+  // 根据 currentFinger 获取对应的手指位置数据
+  switch(currentFinger) {
+      case "thumb":
+          fingerMetrics = arControlScene.fingerMetrics.thumb;
+          break;
+      case "index":
+          fingerMetrics = arControlScene.fingerMetrics.index;
+          break;
+      case "middle":
+          fingerMetrics = arControlScene.fingerMetrics.middle;
+          break;
+      case "ring":
+          fingerMetrics = arControlScene.fingerMetrics.ring;
+          break;
+      case "pinky":
+          fingerMetrics = arControlScene.fingerMetrics.pinky;
+          break;
+      default:
+          fingerMetrics = arControlScene.fingerMetrics.index;
+  }
+
+  // 如果有位置数据，将相对位置转换为屏幕坐标并绘制圆点
+  if (fingerMetrics && fingerMetrics.width !== 0 && fingerMetrics.height !== 0) {
+      // 将相对位置（0-1）转换为实际屏幕坐标
+      const screenX = fingerMetrics.width * width;
+      const screenY = fingerMetrics.height * height;
+
+      push();
+      fill(0, 0, 0, fingerCircleAlpha); // 黑色，带透明度
+      noStroke();
+      circle(screenX, screenY, fingerCircleRadius * 2); // 直径是半径的两倍
+      pop();
+  }
+}
+
+function switchFingerTracking(fingerType) {
+  if (["thumb", "index", "middle", "ring", "pinky"].includes(fingerType)) {
+      currentFinger = fingerType;
+  }
+}
+
 
 function resetAllScenes() {
 
