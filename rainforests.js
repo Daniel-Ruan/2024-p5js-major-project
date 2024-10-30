@@ -1870,4 +1870,27 @@ class ForestScene {
     }
   }
 
+  handleArControlHandAction(x, y) {
+    const xMouse = x * width;
+    const yMouse = y * height;
+    for (let puddle of this.puddles) {
+      puddle.checkClick(xMouse, yMouse);
+    }
+  }
+
+  handleArControlHandActionMove(x, y, capture) {
+    const xMouse = x * width;  // 声明为局部变量
+    const yMouse = y * height; // 声明为局部变量
+    if (capture) {
+      for (let stone of this.stones) {
+        stone.pressed(xMouse, yMouse);
+        stone.dragged(xMouse, yMouse);
+      }
+    } else {
+      for (let stone of this.stones) {
+        stone.released();
+      }
+    }
+  }
+
 }

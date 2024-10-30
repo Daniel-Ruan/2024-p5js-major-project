@@ -14,12 +14,16 @@ let fingerMetrics;
 let lastDirection = "None";
 let lastLipsStatus = "None";
 
-let currentFinger = "index"; // 默认跟踪食指
-let fingerCircleRadius = 30; // 圆的半径
-let fingerCircleAlpha = 200; // 透明度 (0-255)
+let currentFinger = "middle";
+let fingerCircleRadius = 30;
+let fingerCircleAlpha = 200;
+
+const MIN_RADIUS = 10;
+const MAX_RADIUS = 60;
+const RADIUS_STEP = 5;
 
 function preload() {
-  // 初始化 ML 模型
+
   handPoseModel = ml5.handPose({
     maxHands: 1,
     modelType: "full",
@@ -31,7 +35,7 @@ function preload() {
     refineLandmarks: true, 
     flipped: false,
   });
-  //    flipped: false     flipHorizontal: false
+
   backgroundImg = loadImage('assets/thumbnail.png');
   dynapuffFont = loadFont('assets/DynaPuff[wdth,wght].ttf');
 
@@ -90,62 +94,87 @@ function draw() {
       }
     } else if (sceneCounter === 1) {
       forestScene.draw();
-      if (arDetectEnabled && arControlScene) {
-        drawFingerPoint();
-        let currentDirection = arControlScene.lastMoveDirection;
-        if (currentDirection !== lastDirection) {
-            console.log("Direction changed from", lastDirection, "to", currentDirection);
-            forestScene.handleArControlMoveDirection(currentDirection);
-            lastDirection = currentDirection;
-        }
-        let currentLipsStatus = arControlScene.lipsStatus;
-        if (currentLipsStatus !== lastLipsStatus) {
-            console.log("Lips status changed to", currentLipsStatus);
-            forestScene.handleArControlLipsStateDetected(currentLipsStatus);
-            lastLipsStatus = currentLipsStatus;
-        }
-        console.log("Finger position:", fingerMetrics.width, fingerMetrics.height, fingerCircleRadius);
-        forestScene.handleArControlFingerPosition(
-            fingerMetrics.width,
-            fingerMetrics.height,
-            fingerCircleRadius
-        );
-    }
+      handleARControlsScene1();
       drawHelpText();
     } else if (sceneCounter === 2) {
       cityScene.draw();
+      handleARControlsScene2();
       drawHelpText();
     } 
 
     if (arVideo) {
-      push(); // 保存当前绘图状态
-      // 计算缩放后的尺寸（例如原尺寸的 1/4）
+      push();
+
       let arWidth = width / 4;
       let arHeight = height / 4;
-      // 设置 AR 场景的位置（右下角）
-      let arX = width - arWidth; // 距离右边界 20 像素
-      let arY = height - arHeight; // 距离下边界 20 像素
-      // 创建一个半透明的背景
+
+      let arX = width - arWidth;
+      let arY = height - arHeight;
+
       fill(0, 0, 0, 50);
       noStroke();
       rect(arX, arY, arWidth, arHeight);
-      // 将坐标系移动到右下角并缩放
+
       translate(arX, arY);
       scale(arWidth / width, arHeight / height);   
-      // 绘制 AR 控制场景
+
       cameraWindow.draw();    
-      pop(); // 恢复绘图状态
+      pop();
   }
 
   arControlScene.draw();
   
-  // if (arDetectEnabled && arControlScene) {
-  //   // 只有在方向改变时才输出
-  //   if (arControlScene.lastMoveDirection !== "None" && 
-  //       arControlScene.lastMoveDirection !== "Detecting") {
-  //       console.log("Current Move Direction:", arControlScene.lastMoveDirection);
-  //   }
-  // } 
+}
+
+function handleARControlsScene1() {
+  if (!arDetectEnabled || !arControlScene) return;
+
+  drawFingerPoint();
+  
+  // 处理手的移动方向
+  let currentDirection = arControlScene.lastMoveDirection;
+  if (currentDirection !== lastDirection) {
+    forestScene.handleArControlMoveDirection(currentDirection);
+    lastDirection = currentDirection;
+  }
+
+  // 处理缩放动作
+  const headScaling = arControlScene.checkRecentScaling();
+  if (headScaling === true) {
+    forestScene.handleArControlHandAction(
+      fingerMetrics.width,
+      fingerMetrics.height
+    );
+  }
+
+  // 处理手势移动
+  const isZoomIn = arControlScene.scaleDirection === "Zoom Out";
+  forestScene.handleArControlHandActionMove(
+    fingerMetrics.width,
+    fingerMetrics.height,
+    isZoomIn
+  );
+
+  // 处理嘴唇状态
+  let currentLipsStatus = arControlScene.lipsStatus;
+  if (currentLipsStatus !== lastLipsStatus) {
+    forestScene.handleArControlLipsStateDetected(currentLipsStatus);
+    lastLipsStatus = currentLipsStatus;
+  }
+
+  // 处理手指位置
+  forestScene.handleArControlFingerPosition(
+    fingerMetrics.width,
+    fingerMetrics.height,
+    fingerCircleRadius
+  );
+}
+
+function handleARControlsScene2() {
+  if (!arDetectEnabled || !arControlScene) return;
+
+  drawFingerPoint();
+
 }
 
 function mousePressed() {
@@ -210,6 +239,18 @@ function mouseMoved() {
   if (sceneCounter === 1) {
     forestScene.handleMouseMove(mouseX, mouseY);
   }
+}
+
+function mouseWheel(event) {
+  if (event.delta > 0) {
+    // 向下滚动，减小半径
+    fingerCircleRadius = max(MIN_RADIUS, fingerCircleRadius - RADIUS_STEP);
+  } else {
+    // 向上滚动，增大半径
+    fingerCircleRadius = min(MAX_RADIUS, fingerCircleRadius + RADIUS_STEP);
+  }
+  
+  return false;
 }
 
 function keyReleased() {
@@ -395,7 +436,6 @@ function drawHelpText() {
 
 function drawFingerPoint() {
 
-  // 根据 currentFinger 获取对应的手指位置数据
   switch(currentFinger) {
       case "thumb":
           fingerMetrics = arControlScene.fingerMetrics.thumb;
@@ -416,16 +456,15 @@ function drawFingerPoint() {
           fingerMetrics = arControlScene.fingerMetrics.index;
   }
 
-  // 如果有位置数据，将相对位置转换为屏幕坐标并绘制圆点
   if (fingerMetrics && fingerMetrics.width !== 0 && fingerMetrics.height !== 0) {
-      // 将相对位置（0-1）转换为实际屏幕坐标
+
       const screenX = fingerMetrics.width * width;
       const screenY = fingerMetrics.height * height;
 
       push();
-      fill(0, 0, 0, fingerCircleAlpha); // 黑色，带透明度
+      fill(0, 0, 0, fingerCircleAlpha); 
       noStroke();
-      circle(screenX, screenY, fingerCircleRadius * 2); // 直径是半径的两倍
+      circle(screenX, screenY, fingerCircleRadius * 2);
       pop();
   }
 }

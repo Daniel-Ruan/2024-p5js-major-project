@@ -38,7 +38,20 @@ class ARControlScene {
       ratio: 0
     };
     this.lipsStatus = "Detecting";
-    
+
+    this.prevFacePosition = null;
+    this.faceCurrentStatus = "Detecting";
+    this.faceLastMoveDirection = "Detecting";
+    this.FACE_MOVEMENT_THRESHOLD = 50;
+
+    this.scaleHistory = [];
+    this.lastCheckedScale = null;
+    this.MAX_SCALE_HISTORY = 3;  // 保存最近3次的缩放记录
+
+    this.moveHistory = [];
+    this.lastCheckedDirection = null;
+    this.MAX_HISTORY = 3;  // 保存最近3次的移动记录
+
     this.setup();
   }
   
@@ -87,6 +100,19 @@ class ARControlScene {
       ratio: 0
     };
     this.lipsStatus = "Detecting";
+    
+    this.prevFacePosition = null;
+    this.faceCurrentStatus = "Detecting";
+    this.faceLastMoveDirection = "Detecting";
+    this.FACE_MOVEMENT_THRESHOLD = 30;
+
+    this.moveHistory = [];
+    this.lastCheckedDirection = null;
+    this.MAX_HISTORY = 3;  // 保存最近3次的移动记录
+
+    this.scaleHistory = [];
+    this.lastCheckedScale = null;
+    this.MAX_SCALE_HISTORY = 3;  // 保存最近3次的缩放记录
 
     this.isDetecting = false;
   }
@@ -114,6 +140,9 @@ class ARControlScene {
 
       // Draw status information
       this.drawStatusInfo();
+
+      // this.checkFaceMovement();
+
     }
 
     pop();
@@ -133,7 +162,30 @@ class ARControlScene {
         height: face.box.height * scaleY,
         xMax: (face.box.xMin + face.box.width) * scaleX
       };
-      
+
+      const faceCenterX = scaledBox.xMin + (scaledBox.width / 2);
+      const faceCenterY = scaledBox.yMin + (scaledBox.height / 2);
+      const currentFacePosition = { x: faceCenterX, y: faceCenterY };
+      // 检测头部移动
+      if (this.prevFacePosition) {
+        let dx = currentFacePosition.x - this.prevFacePosition.x;
+        let dy = currentFacePosition.y - this.prevFacePosition.y;
+
+        if (Math.abs(dx) > this.FACE_MOVEMENT_THRESHOLD * scaleX || 
+            Math.abs(dy) > this.FACE_MOVEMENT_THRESHOLD * scaleY) {
+          this.faceCurrentStatus = "Moving";
+          if (Math.abs(dx) > Math.abs(dy)) {
+            this.faceLastMoveDirection = dx > 0 ? "Right" : "Left";
+          } else {
+            this.faceLastMoveDirection = dy > 0 ? "Down" : "Up";
+          }
+        } else {
+          this.faceCurrentStatus = "Static";
+        }
+      }
+
+      this.prevFacePosition = currentFacePosition;
+
       // Draw face box
       strokeWeight(width * 0.003);
       stroke(255, 255, 0);
@@ -186,6 +238,15 @@ class ARControlScene {
         ratio: 0
       };
       this.lipsStatus = "Detecting";
+
+      this.prevFacePosition = null;
+      this.faceCurrentStatus = "Detecting";
+      this.faceLastMoveDirection = "Detecting";
+      this.FACE_MOVEMENT_THRESHOLD = 30;
+
+      this.moveHistory = [];
+      this.lastCheckedDirection = null;
+      this.MAX_HISTORY = 3;  // 保存最近3次的移动记录
     }
 
   }
@@ -285,21 +346,12 @@ class ARControlScene {
     text(`Last Move: ${this.lastMoveDirection}`, width/2, yPos);
     yPos += lineHeight;
     text(this.scaleDirection, width/2, yPos);
-    // yPos += lineHeight;
-    // text(`Lips Width: ${this.lipsMetrics.width}px`, width/2, yPos);
-    // yPos += lineHeight;
-    // text(`Lips Height: ${this.lipsMetrics.height}px`, width/2, yPos);
-    // yPos += lineHeight;
-    // text(`Lips Ratio: ${this.lipsMetrics.ratio}`, width/2, yPos);
     yPos += lineHeight;
     text(`Lips Status: ${this.lipsStatus}`, width/2, yPos);
     yPos += lineHeight;
-    const indexMetrics = this.fingerMetrics.index;
-    text(`=== Index Finger Position ===`, width/2, yPos);
+    text(`Face Status: ${this.faceCurrentStatus}`, width/2, yPos);
     yPos += lineHeight;
-    text(`Relative Width: ${indexMetrics.width}`, width/2, yPos);
-    yPos += lineHeight;
-    text(`Relative Height: ${indexMetrics.height}`, width/2, yPos);
+    text(`Face Movement: ${this.faceLastMoveDirection}`, width/2, yPos);
 
   }
   
@@ -373,7 +425,93 @@ class ARControlScene {
       }
     }
   }
-  
+
+  checkRecentMovements() {
+    // 仅在 Detecting 状态时清空历史
+    if (this.faceCurrentStatus === "Detecting") {
+      this.moveHistory = [];
+      this.lastCheckedDirection = null;
+      return;
+    }
+
+    // 如果方向发生变化且不是 Detecting 状态，记录到历史中
+    if (this.faceLastMoveDirection !== this.lastCheckedDirection && 
+        this.faceLastMoveDirection !== "Detecting" && 
+        this.faceCurrentStatus === "Moving") {
+      
+      // 添加新的方向到历史记录
+      this.moveHistory.push(this.faceLastMoveDirection);
+      
+      // 保持历史记录最多3个
+      if (this.moveHistory.length > this.MAX_HISTORY) {
+        this.moveHistory.shift();  // 移除最旧的记录
+      }
+
+      // 更新最后检查的方向
+      this.lastCheckedDirection = this.faceLastMoveDirection;
+
+      // 如果已经有3个记录，进行判断
+      if (this.moveHistory.length === this.MAX_HISTORY) {
+        // 计算水平和垂直移动的次数
+        const horizontalMoves = this.moveHistory.filter(dir => dir === "Left" || dir === "Right").length;
+        const verticalMoves = this.moveHistory.filter(dir => dir === "Up" || dir === "Down").length;
+
+        // 如果水平移动占大多数（2次或以上）
+        if (horizontalMoves >= 2) {
+          console.log("Horizontal movement detected in recent moves:", this.moveHistory);
+          this.moveHistory = [];
+          return false;
+        }
+        // 如果垂直移动占大多数（2次或以上）
+        else if (verticalMoves >= 2) {
+          console.log("Vertical movement detected in recent moves:", this.moveHistory);
+          this.moveHistory = [];
+          return true;
+        }
+      }
+    }
+  }
+
+  checkRecentScaling() {
+    // 仅在 Detecting 状态时清空历史
+    if (this.scaleDirection === "Detecting") {
+      this.scaleHistory = [];
+      this.lastCheckedScale = null;
+      return;
+    }
+
+    // 如果缩放方向发生变化且不是 Detecting 状态
+    if (this.scaleDirection !== this.lastCheckedScale && 
+        this.scaleDirection !== "Detecting") {
+      
+      // 添加新的方向到历史记录
+      this.scaleHistory.push(this.scaleDirection);
+      
+      // 保持历史记录最多3个
+      if (this.scaleHistory.length > this.MAX_SCALE_HISTORY) {
+        this.scaleHistory.shift();  // 移除最旧的记录
+      }
+
+      // 更新最后检查的方向
+      this.lastCheckedScale = this.scaleDirection;
+
+      // 如果已经有3个记录，进行判断
+      if (this.scaleHistory.length === this.MAX_SCALE_HISTORY) {
+        // 计算缩放变化次数
+        const zoomInCount = this.scaleHistory.filter(dir => dir === "Zoom In").length;
+        const zoomOutCount = this.scaleHistory.filter(dir => dir === "Zoom Out").length;
+
+        // 如果有3次变化
+        if (zoomInCount + zoomOutCount === 3) {
+          this.scaleHistory = [];  // 清空历史
+          this.lastCheckedScale = null;
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   gotHands(results) {
     this.hands = results;
   }
