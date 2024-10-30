@@ -131,14 +131,12 @@ function handleARControlsScene1() {
 
   drawFingerPoint();
   
-  // 处理手的移动方向
   let currentDirection = arControlScene.lastMoveDirection;
   if (currentDirection !== lastDirection) {
     forestScene.handleArControlMoveDirection(currentDirection);
     lastDirection = currentDirection;
   }
 
-  // 处理缩放动作
   const headScaling = arControlScene.checkRecentScaling();
   if (headScaling === true) {
     forestScene.handleArControlHandAction(
@@ -147,7 +145,6 @@ function handleARControlsScene1() {
     );
   }
 
-  // 处理手势移动
   const isZoomIn = arControlScene.scaleDirection === "Zoom Out";
   forestScene.handleArControlHandActionMove(
     fingerMetrics.width,
@@ -155,14 +152,12 @@ function handleARControlsScene1() {
     isZoomIn
   );
 
-  // 处理嘴唇状态
   let currentLipsStatus = arControlScene.lipsStatus;
   if (currentLipsStatus !== lastLipsStatus) {
     forestScene.handleArControlLipsStateDetected(currentLipsStatus);
     lastLipsStatus = currentLipsStatus;
   }
 
-  // 处理手指位置
   forestScene.handleArControlFingerPosition(
     fingerMetrics.width,
     fingerMetrics.height,
@@ -174,6 +169,25 @@ function handleARControlsScene2() {
   if (!arDetectEnabled || !arControlScene) return;
 
   drawFingerPoint();
+
+  const headMoving = arControlScene.checkRecentMovements();
+  if (headMoving === true) {
+    cityScene.handleArControlHandActionMove(
+      fingerMetrics.width,
+      fingerMetrics.height,
+      true,
+      fingerCircleRadius
+    );
+  }
+
+  const headScaling = arControlScene.checkRecentScaling();
+  if (headScaling === true) {
+    cityScene.handleArControlHandAction(
+      fingerMetrics.width,
+      fingerMetrics.height,
+      fingerCircleRadius
+    );
+  }
 
 }
 
@@ -191,8 +205,22 @@ function mousePressed() {
     
     let centerX = width / 2;
     let centerY = height / 2;
-    
+
     if (
+      mouseX > centerX - buttonWidth / 2 &&
+      mouseX < centerX + buttonWidth / 2 &&
+      mouseY > centerY - 2*(buttonHeight + spacing / 2) &&
+      mouseY < centerY - 2*(buttonHeight + spacing / 2) + buttonHeight
+    ) {
+      arDetectEnabled = !arDetectEnabled;
+      if (arDetectEnabled) {
+        arControlScene.startDetect();
+      } else {
+        arControlScene.stopDetect();
+      }
+    }
+    
+    else if (
       mouseX > centerX - buttonWidth / 2 &&
       mouseX < centerX + buttonWidth / 2 &&
       mouseY > centerY - buttonHeight - spacing / 2 &&
@@ -243,10 +271,10 @@ function mouseMoved() {
 
 function mouseWheel(event) {
   if (event.delta > 0) {
-    // 向下滚动，减小半径
+
     fingerCircleRadius = max(MIN_RADIUS, fingerCircleRadius - RADIUS_STEP);
   } else {
-    // 向上滚动，增大半径
+
     fingerCircleRadius = min(MAX_RADIUS, fingerCircleRadius + RADIUS_STEP);
   }
   
@@ -285,7 +313,11 @@ function keyPressed() {
     } 
   } else if (key === 'v' || key === 'V') {
     arVideo = !arVideo;
-  } else if (key === '1') {
+  } else if (key === 'f' || key === 'F') {
+    console.log("Toggle fullscreen");
+    arControlScene.toggleStatusInfoOpacity();
+  }
+  else if (key === '1') {
     switchFingerTracking("thumb");
   }
   else if (key === '2') {
@@ -296,14 +328,16 @@ function keyPressed() {
   }
   else if (key === '4') {
     switchFingerTracking("ring");
-  }
+  } 
   else if (key === '5') {
     switchFingerTracking("pinky");
-  } else if (sceneCounter === 1) {
+  } 
+  else if (sceneCounter === 1) {
     if (key === 'a' || key === 'A' || key === 'd' || key === 'D' || key === 's' || key === 'S' || key === 'q' || key === 'Q' || key === 'e' || key === 'E' || key === 'r' || key === 'R') {
       forestScene.handleKeyPressed(key);
     }
-  } else if (sceneCounter === 2) {
+  } 
+  else if (sceneCounter === 2) {
     if (key === 'a' || key === 'A' || key === 'd' || key === 'D' || key === 's' || key === 'S' || key === 'q' || key === 'Q' || key === 'e' || key === 'E' || key === 'r' || key === 'R') {
       cityScene.handleKeyPressed(key);
     }
@@ -321,23 +355,18 @@ function drawMainMenu() {
   let imgX = 0, imgY = 0, imgW = width, imgH = height;
   
   if (screenRatio > imgRatio) {
-    // 屏幕比图片宽，以宽度为基准
     imgH = width / imgRatio;
     imgY = (height - imgH) / 2;
   } else {
-    // 屏幕比图片窄，以高度为基准
     imgW = height * imgRatio;
     imgX = (width - imgW) / 2;
   }
-  
-  // 绘制背景图片
+
   image(backgroundImg, imgX, imgY, imgW, imgH);
   
-  // 添加半透明遮罩使按钮更容易看见
-  fill(0, 0, 0, 100);  // 黑色半透明遮罩
+  fill(0, 0, 0, 100); 
   rect(0, 0, width, height);
 
-  // 按钮尺寸计算
   let buttonWidth = width * 0.2;
   let buttonHeight = height * 0.08;
   let spacing = height * 0.05;
@@ -350,8 +379,15 @@ function drawMainMenu() {
   
   let centerX = width / 2;
   let centerY = height / 2;
+
+  drawButton(
+    centerX - buttonWidth / 2,
+    centerY - 2*(buttonHeight + spacing / 2),
+    buttonWidth,
+    buttonHeight,
+    "Start AR Control"
+  );
   
-  // 绘制按钮
   drawButton(
     centerX - buttonWidth / 2,
     centerY - buttonHeight - spacing / 2,
@@ -373,7 +409,7 @@ function drawMainMenu() {
 
 function drawButton(x, y, w, h, buttonText) {
 
-  fill(200, 230);
+  fill(245, 106, 57, 150);
   stroke(0);
   rect(x, y, w, h, h * 0.2);
   
@@ -390,7 +426,7 @@ function drawHelpText() {
   if (!showHelp) return;
 
   push();
-  fill(0, 0, 0, 100);
+  fill(0, 0, 0, 200);
   noStroke();
   
   let fontSize = width * 0.015;
@@ -407,29 +443,37 @@ function drawHelpText() {
   textAlign(LEFT, TOP);
   
   if (sceneCounter === 3) {
-    text("Welcome to my interactive artwork!", x, y);
-    text("Press H to toggle help text.", x, y + lineHeight);
-    text("Click buttons or use keyboard shortcuts to switch scenes:", x, y + lineHeight * 2);
-    text("Use LEFT/RIGHT ARROW KEYS to switch between scenes.", x, y + lineHeight * 3);
-    text("Press W or UP ARROW to return to main menu.", x, y + lineHeight * 4);
-    text("Press R to reset everything to initial state.", x, y + lineHeight * 5);
-    text("Press SPACEBAR to take a screenshot.", x, y + lineHeight * 6);
+    text("Welcome to my interactive artwork! You can use mouse, keyboard, or AR control!", x, y);
+    text("Press H to toggle help text, press V to toggle video window, press SPACEBAR for screenshot.", x, y + lineHeight);
+    text("AR control requires camera to capture your hands and face. Please adjust your camera position for proper interaction.", x, y + lineHeight * 2);
+    text("Click button or press C to toggle AR control on/off, press F to show/hide AR detection info.", x, y + lineHeight * 3);
+    text("Number keys 1,2,3,4,5 switch black cursor to different fingers, middle finger by default.", x, y + lineHeight * 4);
+    text("Click buttons to navigate different scenes, use LEFT/RIGHT arrow keys to switch between Scene 1 and 2.", x, y + lineHeight * 5);
+    text("Press W or UP arrow to return to main menu, press R to reset everything.", x, y + lineHeight * 6);
   }
   else if (sceneCounter === 1) {
-    text("Welcome to the rainforest scene!", x, y);
-    text("Hold A/D to create wind.", x, y + lineHeight);
-    text("Press S to start or stop the rain.", x, y + lineHeight * 2);
-    text("Press Q/E to adjust the size of the raindrops.", x, y + lineHeight * 3);
-    text("The screen features many interactive objects such as coconuts, rocks, and puddles.", x, y + lineHeight * 4);
-    text("Try throwing stones into puddles to make a splash, or experience a storm!", x, y + lineHeight * 5);
+    text("Welcome to the rainforest scene! If you have questions about shortcuts, press R to return to the initial scene and read!", x, y);
+    text("Hold A/D keys to create wind, release to stop.", x, y + lineHeight);
+    text("Press S to start/stop rain. Press Q/E to adjust the size of raindrops.", x, y + lineHeight * 2);
+    text("Mouse can interact with coconuts, rocks, and puddles.", x, y + lineHeight * 3);
+    text("AR can also interact, first enable AR control.", x, y + lineHeight * 4);
+    text("Wave your hand left/right to create different winds, wave up/down to calm the wind.", x, y + lineHeight * 5);
+    text("Open your mouth wide to start the rain, the larger your mouth, the heavier the rain.", x, y + lineHeight * 6);
+    text("Fingers control the black cursor movement, when moved to coconuts, they will fall.", x, y + lineHeight * 7);
+    text("Move black cursor to puddles and touch/release thumb and index finger twice to trigger puddle interaction.", x, y + lineHeight * 8);
+    text("Move black cursor to rocks and gradually decrease distance between thumb and index finger to pick up rocks.", x, y + lineHeight * 9);
+    text("After moving the rock, increase distance between thumb and index finger to release it.", x, y + lineHeight * 10);
+    text("Try dragging rocks into puddles to make splashes, or experience a storm!", x, y + lineHeight * 11);
   }
   else if (sceneCounter === 2) {
-    text("Welcome to the bustling city intersection!", x, y)
-    text("Hold S to reset the traffic lights.", x, y + lineHeight);
-    text("The screen features many mouse-interactive objects:", x, y + lineHeight * 2);
-    text("Click on cars/doors to honk the horn.", x, y + lineHeight * 3);
-    text("Click on streetlights/traffic lights to turn them on or off.", x, y + lineHeight * 4);
-    text("Try using the fire hydrant to water the grass or act as a traffic cop to direct traffic.", x, y + lineHeight * 5);
+    text("Welcome to the bustling city intersection! If you have questions about shortcuts, press R to return to the initial scene and read!", x, y)
+    text("Hold S key to reset all streetlights to default state.", x, y + lineHeight);
+    text("Click cars/doors to honk, click streetlights/traffic lights to turn them on/off.", x, y + lineHeight * 2);
+    text("Click fire hydrant to water the grass, click grass to grow flowers.", x, y + lineHeight * 3);
+    text("AR can also interact, first enable AR control.", x, y + lineHeight * 4);
+    text("Move black cursor to corresponding objects and touch/release thumb and index finger twice to trigger interaction (sensitive).", x, y + lineHeight * 5);
+    text("Or move black cursor to corresponding objects and try nodding several times to trigger interaction (less sensitive).", x, y + lineHeight * 6);
+    text("Traffic and pedestrians will move according to traffic light changes, and the scene will also transition between day and night!", x, y + lineHeight * 7);
   }
   pop();
 }

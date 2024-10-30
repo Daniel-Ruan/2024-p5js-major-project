@@ -1,7 +1,7 @@
 // ARControl.js
 class ARControlScene {
   constructor(handPoseModel, faceMeshModel, videoOpacity) {
-    // 存储传入的模型
+
     this.handPoseModel = handPoseModel;
     this.faceMeshModel = faceMeshModel;
     this.opacity = videoOpacity;
@@ -46,11 +46,13 @@ class ARControlScene {
 
     this.scaleHistory = [];
     this.lastCheckedScale = null;
-    this.MAX_SCALE_HISTORY = 3;  // 保存最近3次的缩放记录
+    this.MAX_SCALE_HISTORY = 3;
 
     this.moveHistory = [];
     this.lastCheckedDirection = null;
-    this.MAX_HISTORY = 3;  // 保存最近3次的移动记录
+    this.MAX_HISTORY = 3;
+
+    this.statusInfoOpacity = 255;
 
     this.setup();
   }
@@ -108,12 +110,13 @@ class ARControlScene {
 
     this.moveHistory = [];
     this.lastCheckedDirection = null;
-    this.MAX_HISTORY = 3;  // 保存最近3次的移动记录
+    this.MAX_HISTORY = 3;
 
     this.scaleHistory = [];
     this.lastCheckedScale = null;
-    this.MAX_SCALE_HISTORY = 3;  // 保存最近3次的缩放记录
+    this.MAX_SCALE_HISTORY = 3;
 
+    this.statusInfoOpacity = 255;
     this.isDetecting = false;
   }
   
@@ -123,7 +126,7 @@ class ARControlScene {
     push();
 
     tint(255, this.opacity);
-    // Draw video stretched to canvas size
+
     image(this.video, 0, 0, width, height);
 
     // Scale factors
@@ -131,8 +134,7 @@ class ARControlScene {
     let scaleY = height / 1080;
 
     if (this.isDetecting) {
-      // Scale factors
-      // Draw face detection results
+
       this.drawFaceDetection(scaleX, scaleY);
       
       // Draw hand detection results
@@ -140,8 +142,6 @@ class ARControlScene {
 
       // Draw status information
       this.drawStatusInfo();
-
-      // this.checkFaceMovement();
 
     }
 
@@ -186,14 +186,17 @@ class ARControlScene {
 
       this.prevFacePosition = currentFacePosition;
 
+      push();
+
+      const alpha = this.statusInfoOpacity;
       // Draw face box
       strokeWeight(width * 0.003);
-      stroke(255, 255, 0);
+      stroke(255, 255, 0, alpha);
       noFill();
       rect(scaledBox.xMin, scaledBox.yMin, scaledBox.width, scaledBox.height);
       
       // Draw box dimensions
-      fill(255, 255, 0);
+      fill(255, 255, 0, alpha);
       noStroke();
       textSize(width * 0.015);
       text(`Width: ${Math.round(scaledBox.width)}px`, scaledBox.xMin, scaledBox.yMin - 5);
@@ -216,7 +219,7 @@ class ARControlScene {
           
           // Draw feature box
           noFill();
-          stroke(random(255), random(255), random(255));
+          stroke(random(255), random(255), random(255), alpha);
           rect(
             scaledFeature.x,
             scaledFeature.y,
@@ -225,12 +228,13 @@ class ARControlScene {
           );
           
           // Draw feature label
-          fill(255);
+          fill(255, 255, 0, alpha);
           noStroke();
           textSize(width * 0.012);
           text(feature, scaledFeature.x, scaledFeature.y - 5);
         }
       }
+      pop();
     } else {
       this.lipsMetrics = {
         width: 0,
@@ -246,7 +250,7 @@ class ARControlScene {
 
       this.moveHistory = [];
       this.lastCheckedDirection = null;
-      this.MAX_HISTORY = 3;  // 保存最近3次的移动记录
+      this.MAX_HISTORY = 3;
     }
 
   }
@@ -263,16 +267,20 @@ class ARControlScene {
       this.pinkyPosition = this.scalePoint(hand.pinky_finger_tip, scaleX, scaleY);
       let wrist = this.scalePoint(hand.wrist, scaleX, scaleY);
     
+      push();
+
+      const alpha = this.statusInfoOpacity;
+
       // Draw keypoints
       for (let j = 0; j < hand.keypoints.length; j++) {
         let keypoint = this.scalePoint(hand.keypoints[j], scaleX, scaleY);
-        fill(0, 255, 0);
+        fill(0, 255, 0, alpha);
         noStroke();
         circle(keypoint.x, keypoint.y, width * 0.015);
       }
 
       // Draw wrist point
-      fill(255, 0, 0);
+      fill(255, 0, 0, alpha);
       noStroke();
       circle(wrist.x, wrist.y, width * 0.02);
       
@@ -281,8 +289,8 @@ class ARControlScene {
       let pinchCenterX = (this.thumbPosition.x + this.indexFingerPosition.x) / 2;
       let pinchCenterY = (this.thumbPosition.y + this.indexFingerPosition.y) / 2;
       
-      fill(0, 255, 0, 200);
-      stroke(0);
+      fill(0, 255, 0, alpha);
+      stroke(0, 0, 0, alpha);
       strokeWeight(width * 0.003);
       circle(pinchCenterX, pinchCenterY, currentPinchDistance);
 
@@ -312,6 +320,8 @@ class ARControlScene {
       }
       
       this.prevHandPosition = {x: wrist.x, y: wrist.y};
+
+      pop();
     }
 
     // Reset detection status if no hands
@@ -332,14 +342,14 @@ class ARControlScene {
   }
   
   drawStatusInfo() {
-    fill(255);
+    const alpha = this.statusInfoOpacity;
+    fill(255,255, 255, alpha);
     noStroke();
-    textSize(width * 0.03);
+    textSize(width * 0.02);
     textAlign(CENTER);
     
-    // 方案1：从屏幕顶部开始，向下排列
-    let yPos = height * 0.05;  // 从屏幕顶部留一点空间开始
-    const lineHeight = height * 0.05;  // 保持原来的行距
+    let yPos = height * 0.03;
+    const lineHeight = height * 0.03;
     
     text(`Current Status: ${this.currentStatus}`, width/2, yPos);
     yPos += lineHeight;
@@ -387,7 +397,7 @@ class ARControlScene {
 
 
   measureCurrentFingerPoint() {
-    // 只在检测到手时进行测量
+
     if (this.hands.length > 0) {
       const fingerPositions = {
         thumb: this.thumbPosition,
@@ -397,18 +407,15 @@ class ARControlScene {
         pinky: this.pinkyPosition
       };
 
-      // 遍历所有手指进行测量
       for (let fingerType in fingerPositions) {
         const position = fingerPositions[fingerType];
         
         if (position) {
-          // 相对于屏幕宽度的水平位置（0-1）
-          const relativeWidth = position.x / width;
-          // 相对于屏幕高度的垂直位置（0-1）
-          const relativeHeight = position.y / height;
-          // 计算比率
 
-          // 更新对应手指的测量值
+          const relativeWidth = position.x / width;
+
+          const relativeHeight = position.y / height;
+
           this.fingerMetrics[fingerType] = {
             width: Math.round(relativeWidth * 100) / 100,
             height: Math.round(relativeHeight * 100) / 100,
@@ -416,7 +423,7 @@ class ARControlScene {
         }
       }
     } else {
-      // 如果没有检测到手，重置所有手指的测量值
+
       for (let fingerType in this.fingerMetrics) {
         this.fingerMetrics[fingerType] = {
           width: 0,
@@ -427,44 +434,36 @@ class ARControlScene {
   }
 
   checkRecentMovements() {
-    // 仅在 Detecting 状态时清空历史
+
     if (this.faceCurrentStatus === "Detecting") {
       this.moveHistory = [];
       this.lastCheckedDirection = null;
       return;
     }
 
-    // 如果方向发生变化且不是 Detecting 状态，记录到历史中
     if (this.faceLastMoveDirection !== this.lastCheckedDirection && 
         this.faceLastMoveDirection !== "Detecting" && 
         this.faceCurrentStatus === "Moving") {
       
-      // 添加新的方向到历史记录
       this.moveHistory.push(this.faceLastMoveDirection);
       
-      // 保持历史记录最多3个
       if (this.moveHistory.length > this.MAX_HISTORY) {
-        this.moveHistory.shift();  // 移除最旧的记录
+        this.moveHistory.shift(); 
       }
 
-      // 更新最后检查的方向
       this.lastCheckedDirection = this.faceLastMoveDirection;
 
-      // 如果已经有3个记录，进行判断
       if (this.moveHistory.length === this.MAX_HISTORY) {
-        // 计算水平和垂直移动的次数
+
         const horizontalMoves = this.moveHistory.filter(dir => dir === "Left" || dir === "Right").length;
         const verticalMoves = this.moveHistory.filter(dir => dir === "Up" || dir === "Down").length;
 
-        // 如果水平移动占大多数（2次或以上）
         if (horizontalMoves >= 2) {
-          console.log("Horizontal movement detected in recent moves:", this.moveHistory);
           this.moveHistory = [];
           return false;
         }
-        // 如果垂直移动占大多数（2次或以上）
+
         else if (verticalMoves >= 2) {
-          console.log("Vertical movement detected in recent moves:", this.moveHistory);
           this.moveHistory = [];
           return true;
         }
@@ -473,37 +472,31 @@ class ARControlScene {
   }
 
   checkRecentScaling() {
-    // 仅在 Detecting 状态时清空历史
+
     if (this.scaleDirection === "Detecting") {
       this.scaleHistory = [];
       this.lastCheckedScale = null;
       return;
     }
 
-    // 如果缩放方向发生变化且不是 Detecting 状态
     if (this.scaleDirection !== this.lastCheckedScale && 
         this.scaleDirection !== "Detecting") {
       
-      // 添加新的方向到历史记录
       this.scaleHistory.push(this.scaleDirection);
-      
-      // 保持历史记录最多3个
+
       if (this.scaleHistory.length > this.MAX_SCALE_HISTORY) {
-        this.scaleHistory.shift();  // 移除最旧的记录
+        this.scaleHistory.shift();
       }
 
-      // 更新最后检查的方向
       this.lastCheckedScale = this.scaleDirection;
 
-      // 如果已经有3个记录，进行判断
       if (this.scaleHistory.length === this.MAX_SCALE_HISTORY) {
-        // 计算缩放变化次数
+
         const zoomInCount = this.scaleHistory.filter(dir => dir === "Zoom In").length;
         const zoomOutCount = this.scaleHistory.filter(dir => dir === "Zoom Out").length;
 
-        // 如果有3次变化
         if (zoomInCount + zoomOutCount === 3) {
-          this.scaleHistory = [];  // 清空历史
+          this.scaleHistory = []; 
           this.lastCheckedScale = null;
           return true;
         }
@@ -512,6 +505,12 @@ class ARControlScene {
     return false;
   }
 
+  toggleStatusInfoOpacity() {
+    if (this.isDetecting) {
+      this.statusInfoOpacity = this.statusInfoOpacity === 255 ? 0 : 255;
+    }
+  }
+  
   gotHands(results) {
     this.hands = results;
   }

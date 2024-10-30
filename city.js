@@ -2030,6 +2030,27 @@ class FireHydrant {
     }
     return false;
   }
+
+  checkCircleCollision(circleX, circleY, radius) {
+    let hydrantX = this.xRatio * width;
+    let hydrantY = this.yRatio * height;
+    let hitboxWidth = this.bodyWidth * width;
+    let hitboxHeight = (this.bodyHeight + this.capHeight) * height;
+    
+    let rectLeft = hydrantX - hitboxWidth / 2;
+    let rectRight = hydrantX + hitboxWidth / 2;
+    let rectTop = hydrantY;
+    let rectBottom = hydrantY + hitboxHeight;
+
+    let closestX = constrain(circleX, rectLeft, rectRight);
+    let closestY = constrain(circleY, rectTop, rectBottom);
+
+    let distanceX = circleX - closestX;
+    let distanceY = circleY - closestY;
+    let distanceSquared = distanceX * distanceX + distanceY * distanceY;
+
+    return distanceSquared <= (radius * radius);
+  }
   
   update() {
 
@@ -3539,6 +3560,100 @@ class CityScene {
       this.streetLamps.forEach(lamp => {
         lamp.resetToAutomatic(currentPhase);
       });
+    }
+  }
+
+  handleArControlHandActionMove(x, y, capture, circleRadius) {
+    if (capture) {
+      
+      if (this.carFleetManager.checkClick(x, y) || this.reverseCarFleetManager.checkClick(x, y)) {
+        this.carHornSound.play();
+      }
+  
+      if (this.building.checkDoorClick(x, y) || this.buildingRight.checkDoorClick(x, y)) {
+        this.doorBellSound.play();
+      }
+  
+      this.streetLamps.forEach(lamp => {
+        lamp.handleClick(x, y);
+      });
+  
+      this.trafficLightleft.handleClick(x, y);
+      this.trafficLightRight.handleClick(x, y);
+      this.trafficLightBot.handleClick(x, y);
+      this.trafficLighTop.handleClick(x, y);
+      this.flowerManager.handleClick(x, y);
+  
+      const screenX = x * width;
+      const screenY = y * height;
+      
+      if (this.fireHydrant1.checkCircleCollision(screenX, screenY, circleRadius)) {
+        if (this.fireHydrant1.handleClick(this.fireHydrant1.xRatio, this.fireHydrant1.yRatio)) {
+          this.grass.updateGrassState('left', this.fireHydrant1.isActive);
+          if (this.fireHydrant1.isActive) {
+            this.fountainSound1.play();
+          } else {
+            this.fountainSound1.stop();
+          }
+        }
+      }
+  
+      if (this.fireHydrant2.checkCircleCollision(screenX, screenY, circleRadius)) {
+        if (this.fireHydrant2.handleClick(this.fireHydrant2.xRatio, this.fireHydrant2.yRatio)) {
+          this.grass.updateGrassState('right', this.fireHydrant2.isActive);
+          if (this.fireHydrant2.isActive) {
+            this.fountainSound2.play();
+          } else {
+            this.fountainSound2.stop();
+          }
+        }
+      }
+    }
+  }
+
+  handleArControlHandAction(x, y , circleRadius) {
+
+    if (this.carFleetManager.checkClick(x, y) || this.reverseCarFleetManager.checkClick(x, y)) {
+      this.carHornSound.play();
+    }
+
+    if (this.building.checkDoorClick(x, y) || this.buildingRight.checkDoorClick(x, y)) {
+      this.doorBellSound.play();
+    }
+
+    this.streetLamps.forEach(lamp => {
+      lamp.handleClick(x, y);
+    });
+
+    this.trafficLightleft.handleClick(x, y);
+    this.trafficLightRight.handleClick(x, y);
+    this.trafficLightBot.handleClick(x, y);
+    this.trafficLighTop.handleClick(x, y);
+    this.flowerManager.handleClick(x, y);
+
+    const screenX = x * width;
+    const screenY = y * height;
+    
+    if (this.fireHydrant1.checkCircleCollision(screenX, screenY, circleRadius)) {
+      if (this.fireHydrant1.handleClick(this.fireHydrant1.xRatio, this.fireHydrant1.yRatio)) {
+        this.grass.updateGrassState('left', this.fireHydrant1.isActive);
+        if (this.fireHydrant1.isActive) {
+          this.fountainSound1.play();
+        } else {
+          this.fountainSound1.stop();
+        }
+      }
+    }
+
+    if (this.fireHydrant2.checkCircleCollision(screenX, screenY, circleRadius)) {
+      if (this.fireHydrant2.handleClick(this.fireHydrant2.xRatio, this.fireHydrant2.yRatio)) {
+        this.grass.updateGrassState('right', this.fireHydrant2.isActive);
+        if (this.fireHydrant2.isActive) {
+          this.fountainSound2.play();
+        } else {
+          this.fountainSound2.stop();
+        }
+      }
     }
   }
 }
