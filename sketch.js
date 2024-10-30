@@ -450,6 +450,7 @@ function drawHelpText() {
     text("Number keys 1,2,3,4,5 switch black cursor to different fingers, middle finger by default.", x, y + lineHeight * 4);
     text("Click buttons to navigate different scenes, use LEFT/RIGHT arrow keys to switch between Scene 1 and 2.", x, y + lineHeight * 5);
     text("Press W or UP arrow to return to main menu, press R to reset everything.", x, y + lineHeight * 6);
+    text("The mouse wheel controls the size of the black cursor.", x, y + lineHeight * 7);
   }
   else if (sceneCounter === 1) {
     text("Welcome to the rainforest scene! If you have questions about shortcuts, press R to return to the initial scene and read!", x, y);

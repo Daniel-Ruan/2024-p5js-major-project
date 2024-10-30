@@ -1,7 +1,20 @@
 # Recent developments
 
-My interactive AR artwork leverages cutting-edge developments in Art and Interaction Computing to create an immersive experience that transcends traditional passive viewing. Recent advances in AR technology have enabled more intuitive and seamless integration of real-world and digital elements, which is fundamental to the dual-environment setup of my piece. By utilizing AR, the artwork allows viewers to manipulate digital elements—such as weather in the rainforest and traffic lights in the city—in real-time, fostering a deeper connection between the user and the virtual environments.
+My artwork incorporates cutting-edge developments in computer vision and AR interaction through the ml5.js library, specifically utilizing handPose and faceMesh models for natural user interaction. These technologies represent recent advances in making machine learning accessible for creative coding and interactive art.
 
-Furthermore, the use of interactive elements in art has been greatly influenced by the growing interest in human-centered design in computing. This approach emphasizes the importance of responsive and adaptable systems that cater to individual user needs. In my artwork, this is reflected in the adaptability of the scenes based on user interactions, which personalizes the experience and enhances engagement.
+The project implements two key modern interaction paradigms:
 
-Through these technological integrations, my project not only aligns with recent innovations in interactive computing but also pushes the boundaries of how art can be experienced, making it a dynamic and evolving entity that invites user participation and reflection.
+1. Computer Vision-based Gesture Control:
+   - Hand tracking for intuitive object manipulation
+   - Finger pinch detection for precise interaction
+   - Face landmark detection for expression-based control
+   - Real-time pose estimation for natural movement recognition
+2. Multi-modal Interaction Design:
+   - Seamless integration of traditional inputs (mouse/keyboard) with AR controls
+   - Natural mapping of physical gestures to digital effects (mouth opening to rain intensity)
+   - Real-time visual feedback through the black cursor
+   - Adaptive interface supporting both precise and gesture-based interactions
+
+These implementations reflect current trends in human-computer interaction, where the focus is shifting towards more natural and intuitive interfaces. The project demonstrates how modern AR technologies can create engaging interactive experiences without requiring specialized hardware, making digital art more accessible while maintaining sophisticated interaction capabilities.
+
+The artwork also explores contemporary themes in interactive art by blending environmental control with natural gestures, reflecting recent developments in creating more immersive and responsive digital experiences.
