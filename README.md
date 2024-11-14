@@ -4,7 +4,7 @@
 
   This project is an interactive artwork that explores the relationship between human gestures and environmental control through contrasting scenes of a natural rainforest and an urban intersection. It demonstrates how modern technology can bridge human intention and environmental interaction.
 
-  ![thumbnail](assets\thumbnail.png)
+  ![thumbnail](assets/thumbnail.png)
 
   ## Features
 
